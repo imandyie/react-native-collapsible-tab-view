@@ -83,7 +83,7 @@ const V3Demo: React.FC<Props> = ({
     Animated.add(translateYFromVerticalScroll, translateYFromHorizontal)
   );
 
-  const calculateTranslateYFromHorizontalScroll = useDebouncedCallback(
+  const calculateTranslateY = useDebouncedCallback(
     () => {
       const focusedTabOffset = Math.min(
         lastScrollY.current[index.current],
@@ -124,7 +124,7 @@ const V3Demo: React.FC<Props> = ({
   React.useEffect(() => {
     animatedValueX.addListener(({ value }) => {
       index.current = Math.round(value / windowWidth);
-      calculateTranslateYFromHorizontalScroll.callback();
+      calculateTranslateY.callback();
     });
 
     animatedValuesY.forEach((v) =>
@@ -137,55 +137,63 @@ const V3Demo: React.FC<Props> = ({
       animatedValuesY.forEach((v) => v.removeAllListeners());
       animatedValueX.removeAllListeners();
     };
-  }, [
-    animatedValuesY,
-    calculateTranslateYFromHorizontalScroll,
-    animatedValueX,
-  ]);
+  }, [animatedValuesY, calculateTranslateY, animatedValueX]);
 
-  // todo
-  // const snap = useDebouncedCallback(
-  //   (value) => {
-  //     const nHeadersHeight = Math.floor(value / headerHeight);
-  //     const delta = value - nHeadersHeight * headerHeight;
-  //     if (delta <= headerHeight / 2) {
-  //       Animated.spring(animatedValue, {
-  //         toValue: 0,
-  //         useNativeDriver: true,
-  //       }).start(() => {
-  //         // animatedValueDelta.setValue(-delta);
+  const snap = useDebouncedCallback(
+    () => {
+      const offset = lastScrollY.current[index.current];
+      const nHeadersHeight = Math.floor(offset / headerHeight);
+      const isScrolledDown = nHeadersHeight >= 1;
 
-  //       });
-  //       // flatListRefs[index.current].current?.scrollToOffset({
-  //       //   offset: nHeadersHeight * headerHeight,
-  //       //   animated: true,
-  //       // });
-  //       headerIsCollapsed.current = false;
-  //     } else if (!headerIsCollapsed.current && delta < headerHeight) {
-  //       animatedValueDelta.setValue(delta);
-  //       Animated.spring(animatedValue, {
-  //         toValue: headerHeight,
-  //         useNativeDriver: true,
-  //       }).start();
-  //       if (value < headerHeight) {
-  //         flatListRefs[index.current].current?.scrollToOffset({
-  //           offset: headerHeight,
-  //           animated: true,
-  //         });
-  //       }
-  //       headerIsCollapsed.current = true;
-  //     }
-  //   },
-  //   16,
-  //   { trailing: true, leading: false }
-  // );
+      if (!isScrolledDown) {
+        if (offset <= headerHeight / 2) {
+          // snap down
+          // flatListRefs.forEach((ref, i) => {
+          //   if (lastScrollY.current[index.current] <= headerHeight / 2) {
+          //     ref.current?.scrollToOffset({
+          //       animated: true,
+          //       offset: 0,
+          //     });
+          //     lastScrollY.current[i] = 0;
+          //   }
+          // });
+          flatListRefs[index.current].current?.scrollToOffset({
+            animated: true,
+            offset: 0,
+          });
+          lastScrollY.current[index.current] = 0;
+        } else if (offset <= headerHeight) {
+          // snap up
+          // flatListRefs.forEach((ref, i) => {
+          //   if (lastScrollY.current[index.current] <= headerHeight) {
+          //     ref.current?.scrollToOffset({
+          //       animated: true,
+          //       offset: headerHeight,
+          //     });
+          //     lastScrollY.current[i] = headerHeight;
+          //   }
+          // });
+          flatListRefs[index.current].current?.scrollToOffset({
+            animated: true,
+            offset: headerHeight,
+          });
+          lastScrollY.current[index.current] = headerHeight;
+        }
+      }
+      calculateTranslateY.callback();
+    },
+    16,
+    { trailing: true, leading: false }
+  );
 
   const onMomentumScrollEnd = React.useCallback(() => {
-    // snap.callback()
-    calculateTranslateYFromHorizontalScroll.callback();
-  }, [calculateTranslateYFromHorizontalScroll]);
+    snap.callback();
+  }, [snap]);
 
-  // const onScrollBeginDrag
+  const onScrollBeginDrag = React.useCallback(() => {
+    snap.cancel();
+    calculateTranslateY.cancel();
+  }, [snap, calculateTranslateY]);
 
   const renderItem: ListRenderItem<number> = React.useCallback(
     ({ index }) => {
@@ -201,7 +209,7 @@ const V3Demo: React.FC<Props> = ({
           // contentOffset={{ y: headerHeight || 0, x: 0 }}
           contentContainerStyle={{
             paddingTop: headerHeight + tabBarHeight || 0,
-            backgroundColor: 'black',
+            backgroundColor: '#AED6F1',
           }}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: animatedValuesY[index] } } }],
@@ -210,11 +218,17 @@ const V3Demo: React.FC<Props> = ({
             }
           )}
           onMomentumScrollEnd={onMomentumScrollEnd}
-          // onScrollBeginDrag={onScrollBeginDrag}
+          onScrollBeginDrag={onScrollBeginDrag}
         />
       );
     },
-    [animatedValuesY, headerHeight, onMomentumScrollEnd, tabBarHeight]
+    [
+      animatedValuesY,
+      headerHeight,
+      onMomentumScrollEnd,
+      onScrollBeginDrag,
+      tabBarHeight,
+    ]
   );
 
   return (
