@@ -28,7 +28,6 @@ import MaterialTopTabsCollapsibleTabViewDemoExample from './NavigationExample';
 import CollapsibleTabViewNoUpfrontHeightExample from './CollapsibleTabViewNoUpfrontHeightExample';
 import CollapsibleTabViewNoHeaderExample from './CollapsibleTabViewNoHeaderExample';
 import V3Example0 from './v3/V3Example0';
-import V3Example1 from './v3/V3Example1';
 import { ExampleComponentType } from './types';
 
 type State = {
@@ -54,7 +53,6 @@ const EXAMPLE_COMPONENTS: ExampleComponentType[] = [
   CollapsibleTabViewScrollOnHeaderExample,
   CollapsibleTabViewNoHeaderExample,
   V3Example0,
-  V3Example1,
 ];
 
 const KeepAwake = () => {
@@ -239,6 +237,7 @@ const styles = StyleSheet.create({
   },
   appbar: {
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    zIndex: 1000,
   },
   content: {
     flexDirection: 'row',
