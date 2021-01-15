@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, Dimensions, ListRenderItem, View } from 'react-native';
+import { Animated, Dimensions, ListRenderItem, Text, View } from 'react-native';
 import { useDebouncedCallback } from 'use-debounce';
 
 import { FlatList } from 'react-native-gesture-handler';
@@ -7,6 +7,7 @@ import { FlatList } from 'react-native-gesture-handler';
 type Props = {
   headerHeight?: number;
   tabBarHeight?: number;
+  enableSnap?: boolean;
 };
 
 const windowWidth = Dimensions.get('window').width;
@@ -18,8 +19,12 @@ const innerRenderItem0: ListRenderItem<number> = ({ index }) => {
         backgroundColor: index % 2 === 0 ? '#E5E8E8' : '#FBFCFC',
         height: 300,
         width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
-    />
+    >
+      <Text style={{ fontSize: 30 }}>{index}</Text>
+    </View>
   );
 };
 
@@ -30,12 +35,16 @@ const innerRenderItem1: ListRenderItem<number> = ({ index }) => {
         backgroundColor: index % 2 === 0 ? '#FBFCFC' : '#E5E8E8',
         height: 300,
         width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
-    />
+    >
+      <Text style={{ fontSize: 30 }}>{index}</Text>
+    </View>
   );
 };
 
-const HEADER_HEIGHT = 250;
+const HEADER_HEIGHT = 48;
 const TABBAR_HEIGHT = 48;
 
 const flatListRef0 = React.createRef<FlatList<number>>();
@@ -47,6 +56,7 @@ const flatListRefs = [flatListRef0, flatListRef1, flatListRef2];
 const V3Demo: React.FC<Props> = ({
   headerHeight = HEADER_HEIGHT,
   tabBarHeight = TABBAR_HEIGHT,
+  enableSnap = false,
 }) => {
   const [animatedValueX] = React.useState(new Animated.Value(0));
   const [animatedValuesY] = React.useState(
@@ -149,9 +159,10 @@ const V3Demo: React.FC<Props> = ({
         if (offset <= headerHeight / 2) {
           // snap down
           // flatListRefs.forEach((ref, i) => {
-          //   if (lastScrollY.current[index.current] <= headerHeight / 2) {
+          //   const current = i === index.current;
+          //   if (current || lastScrollY.current[i] <= headerHeight / 2) {
           //     ref.current?.scrollToOffset({
-          //       animated: true,
+          //       animated: current,
           //       offset: 0,
           //     });
           //     lastScrollY.current[i] = 0;
@@ -165,9 +176,10 @@ const V3Demo: React.FC<Props> = ({
         } else if (offset <= headerHeight) {
           // snap up
           // flatListRefs.forEach((ref, i) => {
-          //   if (lastScrollY.current[index.current] <= headerHeight) {
+          //   const current = i === index.current;
+          //   if (current || lastScrollY.current[i] <= headerHeight) {
           //     ref.current?.scrollToOffset({
-          //       animated: true,
+          //       animated: current,
           //       offset: headerHeight,
           //     });
           //     lastScrollY.current[i] = headerHeight;
@@ -187,8 +199,12 @@ const V3Demo: React.FC<Props> = ({
   );
 
   const onMomentumScrollEnd = React.useCallback(() => {
-    snap.callback();
-  }, [snap]);
+    if (enableSnap) {
+      snap.callback();
+    } else {
+      calculateTranslateY.callback();
+    }
+  }, [enableSnap, snap, calculateTranslateY]);
 
   const onScrollBeginDrag = React.useCallback(() => {
     snap.cancel();
